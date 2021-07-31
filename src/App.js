@@ -1,23 +1,50 @@
-import logo from './logo.svg';
-import './App.css';
+import { useEffect, useState } from "react";
+import { firestore } from "./firebase";
+import "./App.css";
 
 function App() {
+  let [posts, setPosts] = useState([]);
+
+  useEffect(() => {
+    
+    let f = async () => {
+      await firestore.collection("posts").onSnapshot((querySnapshot) => {
+        let tempArr = [];
+
+        querySnapshot.forEach((doc) => {
+          tempArr.push({
+            id: doc.id,
+            data: doc.data(),
+          });
+        });
+
+        setPosts(tempArr);
+      });
+    };
+
+    f();
+  }, []);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      <ul>
+        {posts.map((el) => (
+          <li key={el.id}>{el.data.Body}</li>
+        ))}
+      </ul>
+
+      <input
+        placeholder="What's on your mind?"
+        type="text"
+        onKeyDown={(e) => {
+          if (e.code === "Enter") {
+            //  jobhi likha hua hai wo muje firebase me dalna hai
+            let post = e.currentTarget.value;
+            firestore.collection("posts").add({ Body: post });
+            e.currentTarget.value = "";
+          }
+        }}
+      />
     </div>
   );
 }
